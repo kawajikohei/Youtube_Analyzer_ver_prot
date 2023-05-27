@@ -1,0 +1,527 @@
+{% extends "layout.html" %}
+
+{% block title %}
+{{title}}
+{% endblock %}
+
+
+{% block headline %}
+<div class = "text-right">
+  <a href="/" style="color: inherit; text-decoration: none;">
+    {{title}}
+  </a>
+    <button type="button" class="btn btn-primary">ログイン</button>
+    <button tyoe="button" class ="btn btn-primary">会員登録</button>
+</div>
+{% endblock %}
+
+{% block input %}
+<form method="post" action="/" style="display: flex; justify-content: center; align-items: center; height: 20vh;">  
+  <div style="display: flex; width: 100%; max-width: 700px;">
+      <input type="text" id="search_word" name="search_word" placeholder="{{message}}" style="width: 100%; font-size: 20px; padding: 10px; border-radius: 20px;">
+      <button type="submit" style="background-color: transparent; border: none; outline: none;">
+          <img src="{{ url_for('static', filename='search-icon.png') }}" alt="search" style="width: 25px; height: 25px;">
+      </button>
+  </div>
+</form>
+{% endblock %}
+
+
+{% block graph %}
+<h1 class="text-center">{{channel_name}}の分析結果</h1>
+<br>
+<!-- 切り替えタブ部分 -->
+<ul class="nav nav-tabs" role="tablist">
+    <!-- １つ目のタブ -->
+    <li class="nav-item">
+        <a class="nav-link active" href="#view"
+            data-toggle="tab" role="tab">再生数</a>
+    </li>
+    <!-- ２つ目のタブ -->
+    <li class="nav-item">
+        <a class="nav-link" href="#like"
+            data-toggle="tab" role="tab">高評価数</a>
+    </li>
+    <!-- ３つ目のタブ -->
+    <li class="nav-item">
+        <a class="nav-link"  href="#all"
+            data-toggle="tab" role="tab">複合</a>
+    </li>
+    <li  class="nav-item">
+        <a class="nav-link" href="#scat"
+          data-toggle="tab" roel="tab">公開時間</a>
+    </li>
+</ul>
+
+<script>//データ用意
+  const thumnails = [{% for i in videodata%}"{{ i[0] }}",{% endfor %}];
+  const titles = [{% for i in videodata%}"{{ i[1] }}",{% endfor %}];
+  const view = [{% for i in videodata%}"{{ i[2] }}",{% endfor %}];
+  const likecounts = [{% for i in videodata%}"{{ i[3] }}",{% endfor %}];
+  const posttimes = [{% for i in videodata%}"{{ i[4] }}",{% endfor %}];
+  //逆順データ
+  const re_thumnails = [{% for i in videodata| reverse %}"{{ i[0] }}",{% endfor %}];
+  const re_titles = [{% for i in videodata| reverse %}"{{ i[1] }}",{% endfor %}];
+  const re_view = [{% for i in videodata| reverse %}"{{ i[2] }}",{% endfor %}];
+  const re_likecounts = [{% for i in videodata| reverse %}"{{ i[3] }}",{% endfor %}];
+  const re_posttimes = [{% for i in videodata| reverse %}"{{ i[4] }}",{% endfor %}];
+</script>
+
+<div class="tab-content">
+  <!-- 再生数のコンテンツ -->
+  <div class="tab-pane fade show active" id="view"  role="tabpanel">
+<canvas id="viewChart"></canvas>
+<div style="text-align: center">
+  <button id="view-type_btn" class="btn btn-primary">グラフタイプ切り替え</button>
+  <button id="view-order_btn" class="btn btn-success">グラフデータ並べ替え</button>
+</div>
+<script>
+  var ctx = document.getElementById('viewChart');
+
+  var viewChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: re_posttimes.map((v) => v.split("")),
+      datasets: [{
+        label: '再生数',
+        data: re_view,
+        tension: 0.2
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+              title: {
+                display: true,
+                text: '公開時間（時）'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: '再生数'
+              }
+            }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              var index = context[0].dataIndex;
+              var title = re_titles[index];
+              return title;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  document.getElementById('view-type_btn').addEventListener('click', function() {
+    if (viewChart.config.type === 'line') {
+      viewChart.config.type = 'bar';
+    } else {
+       viewChart.config.type = 'line';
+    }
+    viewChart.update();
+  });
+  document.getElementById('view-order_btn').addEventListener('click', function() {
+    realdata = viewChart.config.data.datasets[0].data;
+    if(realdata === re_view){
+      viewChart.config.data.labels = posttimes.map((v) => v.split(""));
+      viewChart.config.data.datasets[0].data = view;
+      viewChart.config.options.plugins.tooltip.callbacks.title = function(context) {
+            var index = context[0].dataIndex;
+            var title = titles[index];
+            return title;
+        };
+    }else{
+      viewChart.config.data.labels = re_posttimes.map((v) => v.split(""));
+      viewChart.config.data.datasets[0].data = re_view;
+      viewChart.config.options.plugins.tooltip.callbacks.title = function(context) {
+            var index = context[0].dataIndex;
+            var title = re_titles[index];
+            return title;
+        };
+    }
+    viewChart.update();
+  });
+</script>
+</div>
+  <!-- 高評価数のコンテンツ -->
+<div class="tab-pane fade" id="like" role="tabpanel">
+  <canvas id="likeChart"></canvas>
+  <div style="text-align: center">
+    <button id="like-type_btn" class="btn btn-danger">グラフタイプ切り替え</button>
+    <button id="like-order_btn" class="btn btn-success">グラフデータ並べ替え</button>
+  </div>
+  <script>
+    var ctx = document.getElementById('likeChart');
+  
+    var likeChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: re_posttimes.map((v) => v.split("")),
+        datasets: [{
+          label: '高評価数',
+          data: re_likecounts,
+          backgroundColor: "rgb(255, 99, 132, 0.5)",
+          borderColor: "rgb(255, 99, 132, 0.5)",
+          tension: 0.2
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+              title: {
+                display: true,
+                text: '公開時間（時）'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: '高評価数'
+              }
+            }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              title: function(context) {
+                var index = context[0].dataIndex;
+                var title = re_titles[index];
+                return title;
+              }
+            }
+          }
+        }
+      }
+    });
+  
+    document.getElementById('like-type_btn').addEventListener('click', function() {
+    if (likeChart.config.type === 'line') {
+      likeChart.config.type = 'bar';
+    } else {
+      likeChart.config.type = 'line';
+    }
+    likeChart.update();
+  });
+  document.getElementById('like-order_btn').addEventListener('click',function(){
+    realdata2 = likeChart.config.data.datasets[0].data;
+    if(realdata2 === re_likecounts){
+      likeChart.config.data.labels = posttimes.map((v) => v.split(""));
+      likeChart.config.data.datasets[0].data = likecounts;
+      likeChart.config.options.plugins.tooltip.callbacks.title = function(context) {
+            var index = context[0].dataIndex;
+            var title = re_titles[index];
+            return title;
+        };
+    }else{
+      likeChart.config.data.labels = re_posttimes.map((v) => v.split(""));
+      likeChart.config.data.datasets[0].data = re_likecounts;
+      likeChart.config.options.plugins.tooltip.callbacks.title = function(context) {
+            var index = context[0].dataIndex;
+            var title = re_titles[index];
+            return title;
+        };
+    }
+    likeChart.update();
+  });
+  </script>
+  </div>
+<!-- 再生数・高評価数のコンテンツ -->
+<div class="tab-pane fade" id="all" role="tabpanel">
+  <canvas id="mixChart"></canvas>
+  <div style="text-align: center">
+    <button id="mix_view_btn" class="btn btn-primary">再生数グラフタイプ切り替え</button>
+    <button id="mix_like_btn" class="btn btn-danger">高評価数グラフタイプ切り替え</button>
+    <button id="mix_order_btn" class="btn btn-success">グラフデータ並べ替え</button>
+  </div>
+  <script>
+    var ctx = document.getElementById('mixChart');
+
+  
+    var mixChart = new Chart(ctx, {
+                    data: {
+                        labels:  re_posttimes.map((v)=>v.split("")),
+              datasets: [{
+                  type: 'bar',
+                  label: '再生数',
+                  data: re_view,
+                  backgroundColor: "rgb(54, 162, 235, 0.5)",
+                  borderColor: "rgb(54, 162, 235, 0.5)",
+                  tension: 0.2,
+                  yAxisID: "viewChart",
+              }, {
+                  type: 'line',
+                  label: '高評価数',
+                  data: re_likecounts,
+                  backgroundColor: "rgb(255, 99, 132, 0.5)",
+                  borderColor: "rgb(255, 99, 132, 0.5)",
+                  tension: 0.2,
+                  yAxisID: "likecountChart",
+              }]
+          },
+          options: {
+            scales: {
+              "viewChart": {
+                position: "left",
+                title: {
+                  position: "left",
+                  display: true,
+                  text: '再生数'
+              },
+                grid: {
+                    color: "rgba(54, 162, 235, 0.5)" 
+                }
+              },
+              "likecountChart": {
+                position: "right",
+                title: {
+                  position: "right",
+                  display: true,
+                  text: '高評価数'
+              }, grid: {
+                    color: "rgba(255, 99, 132, 0.5)" 
+                }
+              },
+              x: {
+              title: {
+                display: true,
+                text: '公開時間（時）'
+              }
+            },
+            y: {
+              ticks: {
+                display: false // 目盛りを非表示にする
+              },
+              grid: {
+                display: false // y軸のグリッドを非表示にする
+              }
+            }
+            },
+            plugins: {
+                tooltip: {
+                callbacks: {
+                    title: function(context) {
+                        var index = context[0].dataIndex;
+                        var title = titles[index];
+                        return title;
+                        }
+                }
+                }
+            },
+            interaction: {
+            mode: 'index'//同じx軸にある二つのy軸データをツールチップ内に一緒に出す
+        }
+          }
+        });
+  
+document.getElementById('mix_like_btn').addEventListener('click', function() {
+  mixChart.data.datasets.forEach((dataset) => {
+    if (dataset.label === '高評価数') {
+      if (dataset.type === 'line') {
+        dataset.type = 'bar';
+      } else {
+        dataset.type = 'line';
+      }
+    }
+  });
+  mixChart.update();
+});
+
+document.getElementById('mix_view_btn').addEventListener('click', function() {
+  mixChart.data.datasets.forEach((dataset) => {
+    if (dataset.label === '再生数') {
+      if (dataset.type === 'line') {
+        dataset.type = 'bar';
+      } else {
+        dataset.type = 'line';
+      }
+    }
+  });
+  mixChart.update();
+});
+
+document.getElementById('mix_order_btn').addEventListener('click',function(){
+  all_viewdata = mixChart.config.data.datasets[0].data;
+  if(all_viewdata === re_view){
+    mixChart.config.data.labels = posttimes.map((v) => v.split(""));
+    mixChart.config.data.datasets[0].data = view;
+    mixChart.config.data.datasets[1].data = likecounts;
+    mixChart.config.options.plugins.tooltip.callbacks.title = function(context) {
+            var index = context[0].dataIndex;
+            var title = re_titles[index];
+            return title;
+        };
+
+  }else{
+    mixChart.config.data.labels = re_posttimes.map((v) => v.split(""));
+    mixChart.config.data.datasets[0].data = re_view;
+    mixChart.config.data.datasets[1].data = re_likecounts;
+    mixChart.config.options.plugins.tooltip.callbacks.title = function(context) {
+            var index = context[0].dataIndex;
+            var title = titles[index];
+            return title;
+  };
+}
+  mixChart.update();
+});
+  </script>
+  </div>
+<!-- 散布図のコンテンツ -->
+<div class="tab-pane fade" id="scat" role="tabpanel">
+  <canvas id="scatterChart"></canvas>
+<script>
+var ctx = document.getElementById('scatterChart');
+function parseJapaneseDate(dateString) {
+          const regex = /(\d+)時/;
+          const match = dateString.match(regex);
+          const hour = parseInt(match[0]);
+          return hour;
+        }
+        const chart = new Chart(ctx, {
+          type: 'scatter',
+          data: {
+            datasets: [
+            {
+              label: '再生数',
+              data: [
+              {%for i in videodata%}
+                    {x: parseJapaneseDate("{{i[4]}}"), y: "{{i[2]}}"},
+              {% endfor %}
+              ],
+              backgroundColor: 'blue'
+            }
+          ]
+          },
+          options: {
+            scales: {
+              x: {
+              title: {
+                display: true,
+                text: '公開時間（時）'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: '再生数'
+              }
+            }
+            },
+            plugins: {
+                tooltip: {
+                callbacks: {
+                    title: function(context) {
+                        var index = context[0].dataIndex;
+                        var title = titles[index];
+                        return title;
+                        }
+                    
+                }
+                }
+            }
+          }
+        });
+
+// 散布図を描画する
+</script>
+  
+</div>
+{% endblock %}
+
+{% block content %}
+<hr>
+
+<!--Youtubeのプロフィール情報-->
+<table class="table">
+    <h1 class ="text-center">チャンネルプロフィール情報</h1>
+    <thead>
+        <tr>
+            {%for i in channelcolumns%}
+            <th>{{i}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            {%for i in channeldata%}
+            <th>{{i}}</th>
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>
+<!--/Youtubeのプロフィール情報-->
+
+<!--動画時間の平均値・中央値-->
+<div>
+  <h1>{{channel_name}}の動画時間の分析</h1>
+  <h2 class="row justify-content-center">
+    <div class="col-4 d-flex justify-content-center align-items-center" style="width: 10px; height: 150px; border-radius: 50%; background-color: rgb(95, 220, 64); margin-right: 20px">
+      <span>平均値：{{mean}}</span>
+    </div>
+    <div class="col-4 d-flex justify-content-center align-items-center" style="width: 100px; height: 150px; border-radius: 50%; background-color: rgb(86, 171, 236); margin-left: 20px;">
+      <span>中央値：{{median}}</span>
+    </div>
+  </h2>
+</div>
+<!--/動画時間の平均値・中央値-->
+<h2 class="row justify-content-center">
+  <div class="col-4 d-flex justify-content-center align-items-center" style="width: 10px; height: 150px; border-radius: 50%; background-color: rgb(241, 187, 49); margin-right: 20px">
+    <span>平均投稿頻度：{{day_average}}日</span>
+  </div>
+</h2>
+<!--指定したYoutubeチャンネルの動画リスト表示-->
+<script>
+  $(document).ready(function() {
+    $('#toggleButton').click(function() {
+      $('#toggleElement').slideToggle();
+    });
+  });
+</script>
+<div>
+<h1>動画情報（最大５０件）</h1>
+<button id="toggleButton" class="btn btn-primary mt-3">テーブル  表示/非表示</button>
+</div>
+<table class="table" id="toggleElement"  style="display: none;">
+    
+    <thead>
+        <tr>
+            {%for i in videocolumns%}
+            <th>{{i}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tr></tr>
+    <tbody>
+        {% for item,url in zip(videodata,urls)%}
+        <tr>
+          {% for result in item %}
+            {% if loop.first %}
+              <td>
+                <a href="{{url}}" target="_blank">
+                  <img src="{{ result }}" alt="image">
+                </a>
+              </td>
+            {% else %}
+               <td>{{ result }}</td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+</table>
+<!--/指定したYoutubeチャンネルの動画リスト表示-->
+
+
+{% endblock %}
+
+
+
+
+{% block footer %}
+konpakuzero
+{% endblock %}
+

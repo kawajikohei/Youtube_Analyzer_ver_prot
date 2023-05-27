@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+
+
+
+{% block headline %}
+<a href="/" style="color: inherit; text-decoration: none;">
+    {{title}}
+</a>
+<h4 class = "text-center">Youtubeチャンネルを分析してみよう</h4>
+{% endblock %}
+
+{% block input %}
+<form method="post" action="/" style="display: flex; justify-content: center; align-items: center; height: 20vh;">  
+    <div style="display: flex; width: 100%; max-width: 700px;">
+        <input type="text" id="search_word" name="search_word" placeholder="{{message}}" style="width: 100%; font-size: 20px; padding: 10px; border-radius: 20px;">
+        <button type="submit" style="background-color: transparent; border: none; outline: none;">
+            <img src="{{ url_for('static', filename='search-icon.png') }}" alt="search" style="width: 25px; height: 25px;">
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block content %}
+
+<table class="table">
+    
+    <h1 class ="text-center">検索結果</h1>
+    <h3 class ="text-center">分析したいチャンネルのアイコンをクリックしてください又は再検索してください</h3>
+
+    <tbody>
+        <p>{{erro}}</p>
+        {% for item in select_candidate %}
+        <tr>
+          {% for result in item %}
+            {% if loop.first %}
+                <!--<td>Special processing for the first item: {{ result }}</td>-->
+                <td>
+                    
+                    <a href="/test?channel_name={{item[1]}}&channel_id={{ item[2] }}">
+                        <img src="data:image/jpeg;base64,{{ result }}" alt="Icon">
+                    </a>
+                </td>
+            {% else %}
+                <td>{{ result}}</td>
+             {% endif %}
+         {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+{% block footer %}
+konpakuzero
+{% endblock %}
