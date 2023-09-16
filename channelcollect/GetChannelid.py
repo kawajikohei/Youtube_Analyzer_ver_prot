@@ -55,18 +55,17 @@ def idlist(apilist,search_word):
 #img = Image.open(BytesIO(response.content))
 #img.save('profile.jpg', 'JPEG')
 
-def  image_dl4(image):
-    response = requests.get(image)
-    img = Image.open(BytesIO(response.content))
-    img.save('profile.jpg', 'JPEG')
-    image_list = [
-        f for f in os.listdir()
-        if f.endswith((".jpg"))
-    ]
-    # 画像ファイル名を削除する
-    return image_list[0]
+#def  image_dl4(image):
+ #   response = requests.get(image)
+ #   img = Image.open(BytesIO(response.content))
+ #   img.save('profile.jpg', 'JPEG')
+ #   image_list = [
+ #       f for f in os.listdir()
+ #       if f.endswith((".jpg"))
+ #  # 画像ファイル名を削除する
+  #  return image_list[0]
 
-def image_get(image_url):
+def image_get(image_url):#画像DL後にファイルを取得
     response = requests.get(image_url)
     img = Image.open(BytesIO(response.content))
     img_bytes = BytesIO()
