@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-apilist = os.getenv('APIS_LIST', '').split(',')
+# APIキーは1本だけ使う(複数キーでのクォータ回避は YouTube API の規約違反になるため)
+apilist = [os.getenv('YOUTUBE_API_KEY', '').strip()]
 analyze = AnalyzeYoutube(apilist)
 
 app = Flask(__name__)
@@ -62,5 +63,5 @@ def index():
 
 
 if __name__ == '__main__':
-    app.debug = True
+    app.debug = os.getenv('FLASK_DEBUG') == '1'
     app.run(host='localhost')
