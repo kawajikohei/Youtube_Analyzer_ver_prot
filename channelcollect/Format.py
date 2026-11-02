@@ -19,34 +19,19 @@ def date_frequency(dates):
     for i in range(len(dates) - 1):
         freq = datetime.datetime.strptime(dates[i+1], date_format) - datetime.datetime.strptime(dates[i], date_format)
         frequencies.append(freq)
+    if not frequencies:
+        return '-'
     ave = sum(frequencies, datetime.timedelta()) / len(frequencies)
     return ave.days
 
 
 
-def timeedit(time):#動画時間を秒に変換する
-        pattern = r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?'
-
-    # 正規表現パターンに一致するグループを取得
-        match = re.match(pattern, time)
-
-        # 時間、分、秒の値を取得
-        hours = match.group(1)
-        minutes = match.group(2)
-        seconds = match.group(3)
-
-        # 分に変換
-        total_seconds = 0
-        if hours:
-            total_seconds += int(hours) * 3600
-        if minutes:
-            total_seconds += int(minutes)*60
-        if seconds:
-            total_seconds += int(seconds)
-
-        # フォーマットされた文字列を生成
-        #formatted_data = str(total_minutes) + "分"
-        return total_seconds
+def timeedit(time):#動画時間(ISO8601 例: PT1H2M3S, P1DT2H)を秒に変換する
+    match = re.fullmatch(r'P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?', time or '')
+    if not match:
+        return 0
+    days, hours, minutes, seconds = (int(g) if g else 0 for g in match.groups())
+    return days * 86400 + hours * 3600 + minutes * 60 + seconds
 
 def m_s_convert(time):#timeedit関数変換したデータを分秒の形に変換する
      minutes = time // 60
