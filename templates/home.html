@@ -37,8 +37,8 @@
                 <!--<td>Special processing for the first item: {{ result }}</td>-->
                 <td>
                     
-                    <a href="/test?channel_name={{item[1]}}&channel_id={{ item[2] }}">
-                        <img src="data:image/jpeg;base64,{{ result }}" alt="Icon">
+                    <a href="{{ url_for('index', channel_name=item[1], channel_id=item[2]) }}">
+                        <img src="{{ result }}" alt="Icon" width="88" height="88" loading="lazy">
                     </a>
                 </td>
             {% else %}
